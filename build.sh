@@ -19,7 +19,7 @@ mkdir out
 fi
 
 make O=out ARCH=arm64 pissarro_user_defconfig
-
+    exec 2> >(tee -a out/error.log >&2)
 PATH="${PWD}/clang/bin:${PATH}:${PWD}/clang/bin:${PATH}:${PWD}/clang/bin:${PATH}" \
 make -j$(nproc --all) O=out \
                       ARCH=arm64 \
@@ -33,8 +33,7 @@ make -j$(nproc --all) O=out \
 		      AR=llvm-ar \
 		      NM=llvm-nm \
 		      OBJCOPY=llvm-objcopy \
-   		      OBJDUMP=llvm-objdump \
-                      CONFIG_NO_ERROR_ON_MISMATCH=y 2>&1 | tee error.log
+   		      OBJDUMP=llvm-objdump
 }
 
 function zupload()
