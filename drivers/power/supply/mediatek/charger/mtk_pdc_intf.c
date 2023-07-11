@@ -1,16 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (C) 2016 MediaTek Inc.
- * Copyright (C) 2021 XiaoMi, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See http://www.gnu.org/licenses/gpl-2.0.html for more details.
- */
+ * Copyright (c) 2021 MediaTek Inc.
+*/
 
 #include <linux/errno.h>
 #include <linux/mutex.h>
@@ -161,9 +152,13 @@ int mtk_pdc_get_max_watt(struct charger_manager *info)
 
 	if (info->pdc.pdc_max_watt_setting != -1)
 		info->pdc.pdc_max_watt = info->pdc.pdc_max_watt_setting;
-	else
-		info->pdc.pdc_max_watt = vbat * charging_current;
+	else {
+		if (info->chg1_data.thermal_charging_current_limit != -1)
+			charging_current =
+			info->chg1_data.thermal_charging_current_limit / 1000;
 
+		info->pdc.pdc_max_watt = vbat * charging_current;
+	}
 	chr_err("[%s]watt:%d:%d vbat:%d c:%d=>\n", __func__,
 		info->pdc.pdc_max_watt_setting,
 		info->pdc.pdc_max_watt, vbat, charging_current);
@@ -416,7 +411,7 @@ void mtk_pdc_get_reset_idx(struct charger_manager *info)
 void mtk_pdc_reset(struct charger_manager *info)
 {
 	struct mtk_pdc *pd = &info->pdc;
-
+	info->is_pdc_run = false;
 	chr_err("%s: reset to default profile\n", __func__);
 	mtk_pdc_init_table(info);
 	mtk_pdc_get_reset_idx(info);
@@ -439,6 +434,7 @@ int mtk_pdc_get_setting(struct charger_manager *info, int *newvbus, int *newcur,
 	unsigned int mivr2 = 0;
 	bool chg1_mivr = false;
 	bool chg2_mivr = false;
+	bool chg2_enable = false;
 
 	mtk_pdc_init_table(info);
 	mtk_pdc_get_reset_idx(info);
@@ -481,6 +477,14 @@ int mtk_pdc_get_setting(struct charger_manager *info, int *newvbus, int *newcur,
 
 	charger_dev_get_mivr_state(info->chg1_dev, &chg1_mivr);
 	charger_dev_get_mivr(info->chg1_dev, &mivr1);
+
+	if (is_dual_charger_supported(info)) {
+		charger_dev_is_enabled(info->chg2_dev, &chg2_enable);
+		if (chg2_enable) {
+			charger_dev_get_mivr_state(info->chg2_dev, &chg2_mivr);
+			charger_dev_get_mivr(info->chg2_dev, &mivr2);
+		}
+	}
 
 	vbus = battery_get_vbus();
 	ibus = ibus / 1000;

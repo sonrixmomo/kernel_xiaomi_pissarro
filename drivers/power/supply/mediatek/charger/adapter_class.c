@@ -1,16 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (C) 2016 MediaTek Inc.
- * Copyright (C) 2021 XiaoMi, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See http://www.gnu.org/licenses/gpl-2.0.html for more details.
- */
+ * Copyright (c) 2021 MediaTek Inc.
+*/
 
 #include <linux/module.h>
 #include <linux/stat.h>
@@ -27,6 +18,7 @@
 #include <linux/power_supply.h>
 
 #include <tcpci_config.h>
+
 #include "adapter_class.h"
 
 static struct class *adapter_class;
@@ -306,6 +298,7 @@ static ssize_t adapter_show_name(struct device *dev,
 		       adapter_dev->props.alias_name : "anonymous");
 }
 
+/*
 static int adapter_suspend(struct device *dev, pm_message_t state)
 {
 	struct adapter_device *adapter_dev = to_adapter_device(dev);
@@ -325,6 +318,7 @@ static int adapter_resume(struct device *dev)
 
 	return 0;
 }
+*/
 
 static void adapter_device_release(struct device *dev)
 {
@@ -538,6 +532,8 @@ static ssize_t request_vdm_cmd_show(struct device *dev, struct device_attribute 
 		return snprintf(buf, PAGE_SIZE, "%d,%s\n", cmd, str_buf);
 	case USBPD_UVDM_REVERSE_AUTHEN:
 		return snprintf(buf, PAGE_SIZE, "%d,%d", cmd, adapter_dev->vdm_data.reauth);
+	case USBPD_UVDM_10A_AUTHEN:
+		return snprintf(buf, PAGE_SIZE, "%d,%d", cmd, adapter_dev->vdm_data.current_auth);
 	default:
 		pr_err("feedbak cmd:%d is not support\n", cmd);
 		break;
@@ -588,6 +584,9 @@ static ssize_t usbpd_verifed_store(struct device *dev,
 	if (adapter_dev->verifed) {
 		if (adapter_dev != NULL && adapter_dev->ops != NULL && adapter_dev->ops->get_cap)
 			adapter_dev->ops->get_cap(adapter_dev, MTK_PD_APDO_REGAIN, &cap);
+	} else {
+		if (adapter_dev != NULL && adapter_dev->ops != NULL && adapter_dev->ops->get_cap)
+			adapter_dev->ops->get_cap(adapter_dev, MTK_CAP_TYPE_UNKNOWN, &cap);
 	}
 
 	if (!usb_psy)
@@ -846,8 +845,10 @@ static int __init adapter_class_init(void)
 		return PTR_ERR(adapter_class);
 	}
 	adapter_class->dev_groups = adapter_groups;
+	/*
 	adapter_class->suspend = adapter_suspend;
 	adapter_class->resume = adapter_resume;
+	*/
 	return 0;
 }
 

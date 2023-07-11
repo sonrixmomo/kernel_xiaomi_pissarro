@@ -1,5 +1,52 @@
 # SPDX-License-Identifier: GPL-2.0
 subdir-ccflags-$(CONFIG_POWER_SUPPLY_DEBUG) := -DDEBUG
+ifeq ($(CONFIG_MACH_MT6768),y)
+obj-y += mediatek/
+else ifeq ($(CONFIG_MACH_MT6739),y)
+obj-y += mediatek/
+else ifeq ($(CONFIG_MACH_MT6771),y)
+obj-y += mediatek/
+else ifeq ($(CONFIG_MACH_MT6781),y)
+obj-y += mediatek/
+else ifeq ($(CONFIG_MACH_MT6785),y)
+obj-y += mediatek/
+else ifeq ($(CONFIG_MACH_MT6877),y)
+obj-y += mediatek/
+else ifeq ($(CONFIG_MACH_MT6833),y)
+obj-y += mediatek/
+else ifeq ($(CONFIG_MACH_MT6853),y)
+obj-y += mediatek/
+else ifeq ($(CONFIG_MACH_MT6873),y)
+obj-y += mediatek/
+else ifeq ($(CONFIG_MACH_MT6885),y)
+obj-y += mediatek/
+else ifeq ($(CONFIG_MACH_MT6893),y)
+obj-y += mediatek/
+else
+subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/usb20
+subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/typec/tcpc/inc
+subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/power_throttling
+
+obj-$(CONFIG_CHARGER_CROS_USBPD)	+= cros_usbpd-charger.o
+obj-$(CONFIG_CHARGER_BQ25601) += bq25601.o
+obj-$(CONFIG_CHARGER_RT9458) += rt9458.o
+obj-$(CONFIG_CHARGER_RT9465) += rt9465.o
+obj-$(CONFIG_CHARGER_RT9466) += rt9466.o
+obj-$(CONFIG_CHARGER_RT9467) += rt9467.o
+obj-$(CONFIG_CHARGER_RT9471) += rt9471.o
+obj-$(CONFIG_CHARGER_MT6360) += mt6360_charger.o
+obj-$(CONFIG_BATTERY_MT6357) += mt6357_battery.o
+mt6357_battery-objs := mtk_battery_coulomb_service.o mtk_battery.o mtk_battery_algo.o  mt6357-gauge.o mtk_battery_daemon.o
+obj-$(CONFIG_BATTERY_MT6359) += mt6359_battery.o
+mt6359_battery-objs := mtk_battery_coulomb_service.o mtk_battery.o mtk_battery_algo.o mtk_battery_daemon.o mt6359-gauge.o
+obj-$(CONFIG_CHARGER_TYPE_MT6357) += mt6357-charger-type.o
+obj-$(CONFIG_MTK_CHARGER) += charger_class.o mtk_basic_charger.o mtk_charger.o mtk_charger_algorithm_class.o mtk_charger_intf.o adapter_class.o mtk_pd_adapter.o mtk_pd.o mtk_pd_hal.o mtk_pulse_charger.o
+obj-$(CONFIG_MTK_PUMP_EXPRESS_PLUS_20_SUPPORT) += mtk_pe2.o mtk_pe2_hal.o
+obj-$(CONFIG_MTK_PUMP_EXPRESS_PLUS_SUPPORT) += mtk_pe.o mtk_pe_hal.o
+obj-$(CONFIG_MTK_PUMP_EXPRESS_40_SUPPORT) += mtk_pe4.o mtk_pe4_hal.o
+obj-$(CONFIG_CHARGER_MT6357) += mt6357-pulse-charger.o
+endif
+
 
 power_supply-y				:= power_supply_core.o
 power_supply-$(CONFIG_SYSFS)		+= power_supply_sysfs.o
@@ -18,6 +65,7 @@ obj-$(CONFIG_WM8350_POWER)	+= wm8350_power.o
 obj-$(CONFIG_TEST_POWER)	+= test_power.o
 
 obj-$(CONFIG_BATTERY_88PM860X)	+= 88pm860x_battery.o
+obj-$(CONFIG_CHARGER_ADP5061)	+= adp5061.o
 obj-$(CONFIG_BATTERY_ACT8945A)	+= act8945a_charger.o
 obj-$(CONFIG_BATTERY_AXP20X)	+= axp20x_battery.o
 obj-$(CONFIG_CHARGER_AXP20X)	+= axp20x_ac_power.o
@@ -37,6 +85,7 @@ obj-$(CONFIG_BATTERY_IPAQ_MICRO) += ipaq_micro_battery.o
 obj-$(CONFIG_BATTERY_WM97XX)	+= wm97xx_battery.o
 obj-$(CONFIG_BATTERY_SBS)	+= sbs-battery.o
 obj-$(CONFIG_CHARGER_SBS)	+= sbs-charger.o
+obj-$(CONFIG_MANAGER_SBS)	+= sbs-manager.o
 obj-$(CONFIG_BATTERY_BQ27XXX)	+= bq27xxx_battery.o
 obj-$(CONFIG_BATTERY_BQ27XXX_I2C) += bq27xxx_battery_i2c.o
 obj-$(CONFIG_BATTERY_BQ27XXX_HDQ) += bq27xxx_battery_hdq.o
@@ -82,20 +131,16 @@ obj-$(CONFIG_CHARGER_TPS65090)	+= tps65090-charger.o
 obj-$(CONFIG_CHARGER_TPS65217)	+= tps65217_charger.o
 obj-$(CONFIG_AXP288_FUEL_GAUGE) += axp288_fuel_gauge.o
 obj-$(CONFIG_AXP288_CHARGER)	+= axp288_charger.o
-obj-y 				+= pmic_voter.o
-
-ifeq ($(CONFIG_MACH_MT6877),y)
-else
-	obj-y += mediatek/
-	obj-y += ti/
-	obj-y += mps/
-	obj-y += southchip/
-	obj-y += xiaomi/
-	obj-y += maxim/
-endif
 
 ifeq ($(CONFIG_CUSTOM_BATTERY_EXTERNAL_CHANNEL),y)
 	obj-y += k6885v1_64_alpha/
 endif
 
+
+obj-y += ti/
+obj-y += maxim/
+obj-y += mps/
+obj-y += southchip/
+obj-y += xiaomi/
+obj-y += pmic_voter.o
 

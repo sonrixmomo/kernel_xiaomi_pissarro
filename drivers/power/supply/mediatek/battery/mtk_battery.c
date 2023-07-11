@@ -1,16 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (C) 2016 MediaTek Inc.
- * Copyright (C) 2021 XiaoMi, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See http://www.gnu.org/licenses/gpl-2.0.html for more details.
- */
+ * Copyright (c) 2021 MediaTek Inc.
+*/
 
 /*****************************************************************************
  *
@@ -72,7 +63,7 @@
 #include <mtk_gauge_time_service.h>
 #include <mt-plat/upmu_common.h>
 #include <pmic_lbat_service.h>
-
+#include "../charger/mtk_charger_intf.h"
 
 
 /* ============================================================ */
@@ -136,6 +127,16 @@ static enum power_supply_property battery_props[] = {
 	POWER_SUPPLY_PROP_THERMAL_LIMIT_FCC,
 	POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT,
 	POWER_SUPPLY_PROP_INPUT_SUSPEND,
+	POWER_SUPPLY_PROP_SMART_BATT,
+	POWER_SUPPLY_PROP_NIGHT_CHARGING,
+};
+
+/* boot mode */
+struct tag_bootmode {
+	u32 size;
+	u32 tag;
+	u32 bootmode;
+	u32 boottype;
 };
 
 /* weak function */
@@ -277,7 +278,7 @@ bool is_battery_init_done(void)
 
 bool is_recovery_mode(void)
 {
-	int boot_mode = get_boot_mode();
+	int boot_mode = battery_get_boot_mode();
 
 	if (is_fg_disabled())
 		return false;
@@ -290,6 +291,33 @@ bool is_recovery_mode(void)
 	}
 
 	return false;
+}
+
+int battery_get_boot_mode(void)
+{
+	struct device *dev = NULL;
+	struct device_node *boot_node = NULL;
+	struct tag_bootmode *tag = NULL;
+	int boot_mode = 11;//UNKNOWN_BOOT
+
+	dev = gm.gdev->dev.parent;
+	if (dev != NULL) {
+		boot_node = of_parse_phandle(dev->of_node, "bootmode", 0);
+		if (!boot_node) {
+			bm_err("%s: failed to get boot mode phandle\n", __func__);
+		} else {
+			tag = (struct tag_bootmode *)of_get_property(boot_node,
+								"atag,boot", NULL);
+			if (!tag)
+				bm_err("%s: failed to get atag,boot\n", __func__);
+			else {
+				boot_mode = tag->bootmode;
+				gm.boot_mode = tag->bootmode;
+			}
+		}
+	}
+	bm_debug("%s: boot mode=%d\n", __func__, boot_mode);
+	return boot_mode;
 }
 
 bool is_fg_disabled(void)
@@ -447,7 +475,7 @@ static int battery_get_property(struct power_supply *psy,
 {
 	int ret = 0;
 	int fgcurrent = 0;
-	bool b_ischarging = 0;
+	//bool b_ischarging = 0;
 
 	struct battery_data *data =
 		container_of(psy->desc, struct battery_data, psd);
@@ -470,18 +498,26 @@ static int battery_get_property(struct power_supply *psy,
 		val->intval = charger_manager_get_charge_status();
 		break;
 	case POWER_SUPPLY_PROP_HEALTH:
-		val->intval = charger_manager_get_battery_health();
+		val->intval = data->BAT_HEALTH;/* do not change before*/
 		break;
 	case POWER_SUPPLY_PROP_PRESENT:
 		val->intval = data->BAT_PRESENT;/* do not change before*/
 		break;
 	case POWER_SUPPLY_PROP_TECHNOLOGY:
-		val->intval = POWER_SUPPLY_TECHNOLOGY_LIPO;
+		val->intval = data->BAT_TECHNOLOGY;
 		break;
 	case POWER_SUPPLY_PROP_CYCLE_COUNT:
-		power_supply_get_property(data->ti_bms_psy, POWER_SUPPLY_PROP_CYCLE_COUNT, val);
+		val->intval = gm.bat_cycle;
 		break;
 	case POWER_SUPPLY_PROP_CAPACITY:
+		/* 1 = META_BOOT, 4 = FACTORY_BOOT 5=ADVMETA_BOOT */
+		/* 6= ATE_factory_boot */
+		if (gm.boot_mode == 1 || gm.boot_mode == 4
+			|| gm.boot_mode == 5 || gm.boot_mode == 6) {
+			val->intval = 75;
+			break;
+		}
+
 		if (gm.fixed_uisoc != 0xffff)
 			val->intval = gm.fixed_uisoc;
 		else {
@@ -491,9 +527,11 @@ static int battery_get_property(struct power_supply *psy,
 		}
 		break;
 	case POWER_SUPPLY_PROP_CURRENT_NOW:
-		b_ischarging = gauge_get_current(&fgcurrent);
-
-		val->intval = fgcurrent;
+		//b_ischarging = gauge_get_current(&fgcurrent);
+		//if (b_ischarging == false)
+			//fgcurrent = 0 - fgcurrent;
+		power_supply_get_property(data->ti_bms_psy, POWER_SUPPLY_PROP_CURRENT_NOW, val);
+		//val->intval = fgcurrent;
 		break;
 	case POWER_SUPPLY_PROP_CURRENT_AVG:
 		val->intval = battery_get_bat_avg_current() * 100;
@@ -509,6 +547,7 @@ static int battery_get_property(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
 		power_supply_get_property(data->ti_bms_psy,
 				POWER_SUPPLY_PROP_VOLTAGE_NOW, val);
+		//val->intval = data->BAT_batt_vol * 1000;
 		break;
 	case POWER_SUPPLY_PROP_TEMP:
 		power_supply_get_property(data->ti_bms_psy,
@@ -518,6 +557,7 @@ static int battery_get_property(struct power_supply *psy,
 		val->intval = check_cap_level(data->BAT_CAPACITY);
 		break;
 	case POWER_SUPPLY_PROP_TIME_TO_FULL_NOW:
+		/* full or unknown must return 0 */
 		ret = check_cap_level(data->BAT_CAPACITY);
 		if ((ret == POWER_SUPPLY_CAPACITY_LEVEL_FULL) ||
 			(ret == POWER_SUPPLY_CAPACITY_LEVEL_UNKNOWN))
@@ -561,6 +601,12 @@ static int battery_get_property(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_INPUT_SUSPEND:
 		val->intval = charger_manager_get_input_suspend();
 		break;
+	case POWER_SUPPLY_PROP_SMART_BATT:
+		val->intval = smart_batt_get_diff_fv();
+		break;
+	case POWER_SUPPLY_PROP_NIGHT_CHARGING:
+		val->intval = night_charging_get_status();
+		break;
 	default:
 		ret = -EINVAL;
 		break;
@@ -586,6 +632,12 @@ static int battery_set_property(struct power_supply *psy, enum power_supply_prop
 	case POWER_SUPPLY_PROP_INPUT_SUSPEND:
 		charger_manager_set_input_suspend((bool)(val->intval));
 		break;
+	case POWER_SUPPLY_PROP_SMART_BATT:
+		smart_batt_set_diff_fv(val->intval);
+		break;
+	case POWER_SUPPLY_PROP_NIGHT_CHARGING:
+		night_charging_set_status(val->intval);
+		break;
 	default:
 		rc = -EINVAL;
 		break;
@@ -603,6 +655,8 @@ static int battery_is_writeable(struct power_supply *psy, enum power_supply_prop
 	case POWER_SUPPLY_PROP_THERMAL_LIMIT_FCC:
 	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
 	case POWER_SUPPLY_PROP_INPUT_SUSPEND:
+	case POWER_SUPPLY_PROP_SMART_BATT:
+	case POWER_SUPPLY_PROP_NIGHT_CHARGING:
 		rc = 1;
 		break;
 	default:
@@ -612,6 +666,7 @@ static int battery_is_writeable(struct power_supply *psy, enum power_supply_prop
 
 	return rc;
 }
+
 
 /* battery_data initialization */
 struct battery_data battery_main = {
@@ -698,7 +753,7 @@ void battery_update(struct battery_data *bat_data)
 	struct power_supply *bat_psy = bat_data->psy;
 
 	battery_update_psd(&battery_main);
-	bat_data->BAT_TECHNOLOGY = POWER_SUPPLY_TECHNOLOGY_LION;
+	bat_data->BAT_TECHNOLOGY = POWER_SUPPLY_TECHNOLOGY_LIPO;
 	bat_data->BAT_HEALTH = POWER_SUPPLY_HEALTH_GOOD;
 	bat_data->BAT_PRESENT = 1;
 
@@ -714,7 +769,7 @@ void battery_update(struct battery_data *bat_data)
 
 bool is_kernel_power_off_charging(void)
 {
-	int boot_mode = get_boot_mode();
+	int boot_mode = battery_get_boot_mode();
 
 	if (boot_mode == KERNEL_POWER_OFF_CHARGING_BOOT
 	    || boot_mode == LOW_POWER_OFF_CHARGING_BOOT) {
@@ -1651,6 +1706,8 @@ int force_get_tbat_internal(bool update)
 	static struct timespec pre_time;
 	struct timespec ctime, dtime;
 
+	gm.fixed_bat_tmp = 25;
+
 	if (is_battery_init_done() == false) {
 		gm.tbat_precise = 250;
 		return 25;
@@ -1813,9 +1870,11 @@ int force_get_tbat(bool update)
 		return 25;
 	}
 
+#if defined(FIXED_TBAT_25)
 	bm_debug("[%s] fixed TBAT=25 t\n", __func__);
 	gm.tbat_precise = 250;
 	return 25;
+#else
 
 	bat_temperature_val = force_get_tbat_internal(update);
 
@@ -1862,8 +1921,8 @@ int force_get_tbat(bool update)
 		bat_temperature_val, gm.tbat_precise);
 
 	return bat_temperature_val;
+#endif
 }
-
 
 unsigned int battery_meter_get_fg_time(void)
 {
@@ -3359,6 +3418,25 @@ void exec_BAT_EC(int cmd, int param)
 			dump_pseudo100(param);
 		}
 		break;
+	case 802:
+		{
+			fg_cust_data.zcv_com_vol_limit = param;
+
+			bm_err(
+				"exe_BAT_EC cmd %d,zcv_com_vol_limit =%d\n",
+				cmd, param);
+		}
+		break;
+	case 803:
+		{
+			fg_cust_data.sleep_current_avg = param;
+
+			bm_err(
+				"exe_BAT_EC cmd %d,sleep_current_avg =%d\n",
+				cmd, param);
+		}
+		break;
+
 
 	default:
 		bm_err(
@@ -3865,18 +3943,27 @@ static ssize_t store_BAT_HEALTH(
 	char *s = buf_str, *pch;
 	/* char *ori = buf_str; */
 	int chr_size = 0;
-	int i = 0, count = 0, value[50];
+	int i = 0, j = 0, count = 0, value[50];
 
 
 	bm_err("%s, size =%d, str=%s\n", __func__, size, buf);
 
-	strncpy(buf_str, buf, size);
-	/* bm_err("%s, copy str=%s\n", __func__, buf_str); */
-
-	if (size > 350) {
+	if (size < 90 || size > 350) {
 		bm_err("%s error, size mismatch\n", __func__);
 		return -1;
+	} else {
+		for (i = 0; i < strlen(buf); i++) {
+			if (buf[i] == ',')
+				j++;
+		}
+		if (j != 46) {
+			bm_err("%s error, invalid input\n", __func__);
+			return -1;
+		}
 	}
+
+	strncpy(buf_str, buf, size);
+	/* bm_err("%s, copy str=%s\n", __func__, buf_str); */
 
 	if (buf != NULL && size != 0) {
 
@@ -4420,7 +4507,7 @@ static const struct file_operations adc_cali_fops = {
 
 
 /*************************************/
-static struct wakeup_source battery_lock;
+static struct wakeup_source *battery_lock;
 static int __init battery_probe(struct platform_device *dev)
 {
 	int ret_device_file = 0;
@@ -4440,8 +4527,8 @@ static int __init battery_probe(struct platform_device *dev)
 	char boot_voltage_tmp[10];
 	int boot_voltage_len = 0;
 
-	wakeup_source_init(&battery_lock, "battery wakelock");
-	__pm_stay_awake(&battery_lock);
+	battery_lock = wakeup_source_register(NULL, "battery wakelock");
+	__pm_stay_awake(battery_lock);
 
 /********* adc_cdev **********/
 	ret = alloc_chrdev_region(&adc_cali_devno, 0, 1, ADC_CALI_DEVNAME);
@@ -4588,7 +4675,7 @@ static int __init battery_probe(struct platform_device *dev)
 
 	battery_debug_init();
 
-	__pm_relax(&battery_lock);
+	__pm_relax(battery_lock);
 
 	if (IS_ENABLED(CONFIG_POWER_EXT) || gm.disable_mtkbattery ||
 		IS_ENABLED(CONFIG_MTK_DISABLE_GAUGE)) {

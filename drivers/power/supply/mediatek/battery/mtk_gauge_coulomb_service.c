@@ -1,15 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (C) 2016 MediaTek Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See http://www.gnu.org/licenses/gpl-2.0.html for more details.
- */
+ * Copyright (c) 2021 MediaTek Inc.
+*/
 #ifndef _DEA_MODIFY_
 #include <mt-plat/upmu_common.h>
 #include <mt-plat/mtk_battery.h>
@@ -22,13 +14,20 @@
 #include "mtk_gauge_class.h"
 #include <mtk_battery_internal.h>
 
+void __attribute__ ((weak)) 
+		pmic_register_interrupt_callback(unsigned int intNo,
+  		void (EINT_FUNC_PTR) (void))
+{
+	/*work around for mt6768*/
+}
+
 static struct list_head coulomb_head_plus = LIST_HEAD_INIT(coulomb_head_plus);
 static struct list_head coulomb_head_minus = LIST_HEAD_INIT(coulomb_head_minus);
 static struct mutex coulomb_lock;
 static struct mutex hw_coulomb_lock;
 static unsigned long reset_coulomb;
 static spinlock_t slock;
-static struct wakeup_source wlock;
+static struct wakeup_source *wlock;
 static wait_queue_head_t wait_que;
 static bool coulomb_thread_timeout;
 static int fgclog_level;
@@ -105,7 +104,7 @@ void wake_up_gauge_coulomb(void)
 
 	ft_err("%s %d %d %d %d\n",
 		__func__,
-		wlock.active,
+		wlock->active,
 		coulomb_thread_timeout,
 		coulomb_lock_cnt,
 		hw_coulomb_lock_cnt);
@@ -115,8 +114,8 @@ void wake_up_gauge_coulomb(void)
 	gauge_set_coulomb_interrupt1_lt(300);
 	mutex_hw_coulomb_unlock();
 	spin_lock_irqsave(&slock, flags);
-	if (wlock.active == 0)
-		__pm_stay_awake(&wlock);
+	if (wlock->active == 0)
+		__pm_stay_awake(wlock);
 	spin_unlock_irqrestore(&slock, flags);
 
 	coulomb_thread_timeout = true;
@@ -150,7 +149,7 @@ void gauge_coulomb_dump_list(void)
 
 	ft_debug("%s %d %d\n",
 		__func__,
-		wlock.active,
+		wlock->active,
 		coulomb_thread_timeout);
 
 	mutex_coulomb_lock();
@@ -489,9 +488,10 @@ static int gauge_coulomb_thread(void *arg)
 {
 	unsigned long flags = 0;
 	struct timespec start, end, duraction;
+	int ret = 0;
 
 	while (1) {
-		wait_event(wait_que, (coulomb_thread_timeout == true));
+		ret = wait_event_interruptible(wait_que, (coulomb_thread_timeout == true));
 		coulomb_thread_timeout = false;
 		get_monotonic_boottime(&start);
 		ft_trace("[%s]=>\n", __func__);
@@ -500,7 +500,7 @@ static int gauge_coulomb_thread(void *arg)
 		mutex_coulomb_unlock();
 
 		spin_lock_irqsave(&slock, flags);
-		__pm_relax(&wlock);
+		__pm_relax(wlock);
 		spin_unlock_irqrestore(&slock, flags);
 
 
@@ -508,11 +508,11 @@ static int gauge_coulomb_thread(void *arg)
 		duraction = timespec_sub(end, start);
 
 		ft_trace(
-			"%s time:%d ms %d %d\n",
+			"%s time:%d ms %d %d, ret=%d\n",
 			__func__,
 			(int)(duraction.tv_nsec / 1000000),
 			(int)(sstart[0].tv_nsec / 1000000),
-			(int)(sstart[1].tv_nsec / 1000000));
+			(int)(sstart[1].tv_nsec / 1000000), ret);
 
 		if (fix_coverity == 1)
 			break;
@@ -529,7 +529,8 @@ void gauge_coulomb_service_init(void)
 	mutex_init(&coulomb_lock);
 	mutex_init(&hw_coulomb_lock);
 	spin_lock_init(&slock);
-	wakeup_source_init(&wlock, "gauge coulomb wakelock");
+	//wakeup_source_init(wlock, "gauge coulomb wakelock");
+	wlock = wakeup_source_register(NULL, "gauge coulomb wakelock");
 	init_waitqueue_head(&wait_que);
 	kthread_run(gauge_coulomb_thread, NULL, "gauge_coulomb_thread");
 

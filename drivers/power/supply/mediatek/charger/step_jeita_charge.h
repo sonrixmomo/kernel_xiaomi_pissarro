@@ -1,4 +1,4 @@
-#define STEP_JEITA_TUPLE_COUNT	6
+#define STEP_JEITA_TUPLE_COUNT	7
 #define THERMAL_LIMIT_COUNT	16
 #define THERMAL_LIMIT_TUPLE	6
 
@@ -6,11 +6,16 @@
 #define JEITA_FCC_DESCENT_STEP	250
 #define SW_CV_COUNT		3
 
-#define TYPEC_BURN_TEMP		750
+#define TYPEC_BURN_LOW_TEMP		600
+#define TYPEC_BURN_REPORT_TEMP		650
+#define TYPEC_BURN_TEMP		700
 #define TYPEC_BURN_HYST		100
 
-#define MAX_THERMAL_FCC		12400
+#define MAX_THERMAL_FCC		22000
 #define MIN_THERMAL_FCC		200
+
+#define MIN_FFC_JEITA_CHG_INDEX    4
+#define MAX_FFC_JEITA_CHG_INDEX    5
 
 struct step_jeita_cfg0 {
 	int low_threshold;
@@ -27,6 +32,7 @@ struct step_jeita_cfg1 {
 };
 
 enum cycle_count_status {
+	CYCLE_COUNT_FRESH,
 	CYCLE_COUNT_LOW,
 	CYCLE_COUNT_NORMAL,
 	CYCLE_COUNT_HIGH,

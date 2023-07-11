@@ -1,0 +1,137 @@
+ld.lld: error: undefined symbol: bat_get_debug_level
+>>> referenced by mt6359_gauge.c:91 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.c:91)
+>>>               drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.o:(MV_to_REG_12_value) in archive built-in.o
+>>> referenced by mt6359_gauge.c:1228 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.c:1228)
+>>>               drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.o:(read_hw_ocv) in archive built-in.o
+>>> referenced by mt6359_gauge.c:117 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.c:117)
+>>>               drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.o:(read_hw_ocv) in archive built-in.o
+>>> referenced 153 more times
+
+ld.lld: error: undefined symbol: battery_get_charger_zcv
+>>> referenced by mt6359_gauge.c:1270 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.c:1270)
+>>>               drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.o:(read_hw_ocv) in archive built-in.o
+
+ld.lld: error: undefined symbol: fg_get_battery_temperature_for_zcv
+>>> referenced by mt6359_gauge.c:1271 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.c:1271)
+>>>               drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.o:(read_hw_ocv) in archive built-in.o
+
+ld.lld: error: undefined symbol: get_mtk_battery
+>>> referenced by mt6359_gauge.c:1273 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.c:1273)
+>>>               drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.o:(read_hw_ocv) in archive built-in.o
+>>> referenced by mt6359_gauge.c:1273 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.c:1273)
+>>>               drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.o:(read_hw_ocv) in archive built-in.o
+>>> referenced by mt6359_gauge.c:1299 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.c:1299)
+>>>               drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.o:(read_hw_ocv) in archive built-in.o
+>>> referenced 9 more times
+
+ld.lld: error: undefined symbol: set_hw_ocv_unreliable
+>>> referenced by mt6359_gauge.c:1336 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.c:1336)
+>>>               drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.o:(read_hw_ocv) in archive built-in.o
+
+ld.lld: error: undefined symbol: is_fg_disabled
+>>> referenced by mt6359_gauge.c:1353 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.c:1353)
+>>>               drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.o:(read_hw_ocv) in archive built-in.o
+
+ld.lld: error: undefined symbol: gauge_enable_interrupt
+>>> referenced by mt6359_gauge.c:1506 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.c:1506)
+>>>               drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.o:(fgauge_set_coulomb_interrupt1_ht) in archive built-in.o
+>>> referenced by mt6359_gauge.c:1512 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.c:1512)
+>>>               drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.o:(fgauge_set_coulomb_interrupt1_ht) in archive built-in.o
+>>> referenced by mt6359_gauge.c:1418 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.c:1418)
+>>>               drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.o:(fgauge_set_coulomb_interrupt1_ht) in archive built-in.o
+>>> referenced 24 more times
+
+ld.lld: error: undefined symbol: fg_cust_data
+>>> referenced by mt6359_gauge.c:3126 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.c:3126)
+>>>               drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.o:(fgauge_set_battery_cycle_interrupt) in archive built-in.o
+>>> referenced by mt6359_gauge.c:3126 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.c:3126)
+>>>               drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.o:(fgauge_set_battery_cycle_interrupt) in archive built-in.o
+>>> referenced by mt6359_gauge.c:3137 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.c:3137)
+>>>               drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.o:(fgauge_set_battery_cycle_interrupt) in archive built-in.o
+>>> referenced 17 more times
+
+ld.lld: error: undefined symbol: gauge_device_register
+>>> referenced by mt6359_gauge.c:3327 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.c:3327)
+>>>               drivers/misc/mediatek/pmic/mt6359p/v1/mt6359_gauge.o:(mt6359_gauge_probe) in archive built-in.o
+
+ld.lld: error: undefined symbol: gauge_get_current
+>>> referenced by pmic_auxadc.c:481 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6359p/v1/pmic_auxadc.c:481)
+>>>               drivers/misc/mediatek/pmic/mt6359p/v1/pmic_auxadc.o:(pmic_get_auxadc_value) in archive built-in.o
+>>> referenced by mtk_battery_intf.c:98 (/home/luci/pissarro/out/../drivers/misc/mediatek/power/mt6853/mtk_battery_intf.c:98)
+>>>               drivers/misc/mediatek/power/mt6853/mtk_battery_intf.o:(battery_get_bat_current) in archive built-in.o
+>>> referenced by mtk_battery_intf.c:98 (/home/luci/pissarro/out/../drivers/misc/mediatek/power/mt6853/mtk_battery_intf.c:98)
+>>>               drivers/misc/mediatek/power/mt6853/mtk_battery_intf.o:(battery_get_bat_current_mA) in archive built-in.o
+>>> referenced 3 more times
+
+ld.lld: error: undefined symbol: gauge_get_ptim_current
+>>> referenced by pmic_throttling_dlpt.c:847 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6359p/v1/pmic_throttling_dlpt.c:847)
+>>>               drivers/misc/mediatek/pmic/mt6359p/v1/pmic_throttling_dlpt.o:(do_ptim_internal) in archive built-in.o
+
+ld.lld: error: undefined symbol: set_shutdown_cond
+>>> referenced by pmic_throttling_dlpt.c:1320 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6359p/v1/pmic_throttling_dlpt.c:1320)
+>>>               drivers/misc/mediatek/pmic/mt6359p/v1/pmic_throttling_dlpt.o:(dlpt_notify_handler) in archive built-in.o
+
+ld.lld: error: undefined symbol: charger_device_register
+>>> referenced by mt6360_pmu_chg.c:3306 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6360/pmu/mt6360_pmu_chg.c:3306)
+>>>               drivers/misc/mediatek/pmic/mt6360/pmu/mt6360_pmu_chg.o:(mt6360_pmu_chg_probe) in archive built-in.o
+>>> referenced by mt6360_pmu_chg.c:3316 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6360/pmu/mt6360_pmu_chg.c:3316)
+>>>               drivers/misc/mediatek/pmic/mt6360/pmu/mt6360_pmu_chg.o:(mt6360_pmu_chg_probe) in archive built-in.o
+
+ld.lld: error: undefined symbol: charger_device_unregister
+>>> referenced by mt6360_pmu_chg.c:3390 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6360/pmu/mt6360_pmu_chg.c:3390)
+>>>               drivers/misc/mediatek/pmic/mt6360/pmu/mt6360_pmu_chg.o:(mt6360_pmu_chg_probe) in archive built-in.o
+>>> referenced by mt6360_pmu_chg.c:3391 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6360/pmu/mt6360_pmu_chg.c:3391)
+>>>               drivers/misc/mediatek/pmic/mt6360/pmu/mt6360_pmu_chg.o:(mt6360_pmu_chg_probe) in archive built-in.o
+>>> referenced by mt6360_pmu_chg.c:3415 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6360/pmu/mt6360_pmu_chg.c:3415)
+>>>               drivers/misc/mediatek/pmic/mt6360/pmu/mt6360_pmu_chg.o:(mt6360_pmu_chg_remove) in archive built-in.o
+>>> referenced 1 more times
+
+ld.lld: error: undefined symbol: charger_dev_notify
+>>> referenced by mt6360_pmu_chg.c:1909 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6360/pmu/mt6360_pmu_chg.c:1909)
+>>>               drivers/misc/mediatek/pmic/mt6360/pmu/mt6360_pmu_chg.o:(mt6360_do_event) in archive built-in.o
+>>> referenced by mt6360_pmu_chg.c:1781 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6360/pmu/mt6360_pmu_chg.c:1781)
+>>>               drivers/misc/mediatek/pmic/mt6360/pmu/mt6360_pmu_chg.o:(mt6360_safety_check) in archive built-in.o
+>>> referenced by mt6360_pmu_chg.c:2346 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6360/pmu/mt6360_pmu_chg.c:2346)
+>>>               drivers/misc/mediatek/pmic/mt6360/pmu/mt6360_pmu_chg.o:(mt6360_pmu_chg_tmri_handler) in archive built-in.o
+>>> referenced 2 more times
+
+ld.lld: error: undefined symbol: get_charger_by_name
+>>> referenced by mt6360_pmic_i2c.c:869 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6360/pmic/mt6360_pmic_i2c.c:869)
+>>>               drivers/misc/mediatek/pmic/mt6360/pmic/mt6360_pmic_i2c.o:(mt6360_pmic_i2c_probe) in archive built-in.o
+>>> referenced by rt_pd_manager.c:301 (/home/luci/pissarro/out/../drivers/misc/mediatek/power/rt_pd_manager.c:301)
+>>>               drivers/misc/mediatek/power/rt_pd_manager.o:(rt_pd_manager_probe) in archive built-in.o
+>>> referenced by tcpc_mt6360.c:2577 (/home/luci/pissarro/out/../drivers/misc/mediatek/typec/tcpc/tcpc_mt6360.c:2577)
+>>>               drivers/misc/mediatek/typec/tcpc/tcpc_mt6360.o:(mt6360_i2c_probe) in archive built-in.o
+>>> referenced 3 more times
+
+ld.lld: error: undefined symbol: charger_dev_enable_hidden_mode
+>>> referenced by mt6360_pmic_i2c.c:789 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6360/pmic/mt6360_pmic_i2c.c:789)
+>>>               drivers/misc/mediatek/pmic/mt6360/pmic/mt6360_pmic_i2c.o:(mt6360_pmic_i2c_probe) in archive built-in.o
+>>> referenced by mt6360_pmic_i2c.c:804 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6360/pmic/mt6360_pmic_i2c.c:804)
+>>>               drivers/misc/mediatek/pmic/mt6360/pmic/mt6360_pmic_i2c.o:(mt6360_pmic_i2c_probe) in archive built-in.o
+>>> referenced by mt6360_pmic_i2c.c:804 (/home/luci/pissarro/out/../drivers/misc/mediatek/pmic/mt6360/pmic/mt6360_pmic_i2c.c:804)
+>>>               drivers/misc/mediatek/pmic/mt6360/pmic/mt6360_pmic_i2c.o:(mt6360_pmic_i2c_probe) in archive built-in.o
+>>> referenced 2 more times
+
+ld.lld: error: undefined symbol: charger_manager_enable_high_voltage_charging
+>>> referenced by flashlights-mt6360.c:358 (/home/luci/pissarro/out/../drivers/misc/mediatek/flashlight/flashlights-mt6360.c:358)
+>>>               drivers/misc/mediatek/flashlight/flashlights-mt6360.o:(mt6360_flash_brightness_set) in archive built-in.o
+>>> referenced by flashlights-mt6360.c:367 (/home/luci/pissarro/out/../drivers/misc/mediatek/flashlight/flashlights-mt6360.c:367)
+>>>               drivers/misc/mediatek/flashlight/flashlights-mt6360.o:(mt6360_flash_brightness_set) in archive built-in.o
+>>> referenced by flashlights-mt6360.c:358 (/home/luci/pissarro/out/../drivers/misc/mediatek/flashlight/flashlights-mt6360.c:358)
+>>>               drivers/misc/mediatek/flashlight/flashlights-mt6360.o:(mt6360_flash2_brightness_set) in archive built-in.o
+>>> referenced 7 more times
+
+ld.lld: error: undefined symbol: is_battery_init_done
+>>> referenced by mtk_battery_intf.c:130 (/home/luci/pissarro/out/../drivers/misc/mediatek/power/mt6853/mtk_battery_intf.c:130)
+>>>               drivers/misc/mediatek/power/mt6853/mtk_battery_intf.o:(battery_get_bat_temperature) in archive built-in.o
+>>> referenced by mtk_battery_intf.c:130 (/home/luci/pissarro/out/../drivers/misc/mediatek/power/mt6853/mtk_battery_intf.c:130)
+>>>               drivers/misc/mediatek/power/mt6853/mtk_battery_intf.o:(battery_meter_get_battery_temperature) in archive built-in.o
+
+ld.lld: error: undefined symbol: gauge_get_average_current
+>>> referenced by mtk_battery_intf.c:150 (/home/luci/pissarro/out/../drivers/misc/mediatek/power/mt6853/mtk_battery_intf.c:150)
+>>>               drivers/misc/mediatek/power/mt6853/mtk_battery_intf.o:(battery_get_bat_avg_current) in archive built-in.o
+>>> referenced by mtk_battery_intf.c:150 (/home/luci/pissarro/out/../drivers/misc/mediatek/power/mt6853/mtk_battery_intf.c:150)
+>>>               drivers/misc/mediatek/power/mt6853/mtk_battery_intf.o:(BAT_Get_Battery_Current) in archive built-in.o
+
+ld.lld: error: too many errors emitted, stopping now (use -error-limit=0 to see all errors)

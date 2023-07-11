@@ -1,16 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (C) 2015 MediaTek Inc.
- * Copyright (C) 2021 XiaoMi, Inc.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- */
+ * Copyright (c) 2021 MediaTek Inc.
+*/
 
 #ifndef LINUX_POWER_ADAPTER_CLASS_H
 #define LINUX_POWER_ADAPTER_CLASS_H
@@ -50,6 +41,7 @@ enum adapter_event {
 	MTK_TYPEC_WD_STATUS,
 	MTK_TYPEC_HRESET_STATUS,
 	MTK_PD_UVDM,
+	MTK_PD_CONNECT_SOFT_RESET,
 };
 
 enum adapter_property {
@@ -96,6 +88,8 @@ enum uvdm_state {
 	USBPD_UVDM_VERIFIED,
 	USBPD_UVDM_REMOVE_COMPENSATION,
 	USBPD_UVDM_REVERSE_AUTHEN,
+	USBPD_UVDM_TODO,
+	USBPD_UVDM_10A_AUTHEN,
 	USBPD_UVDM_CONNECT,
 	USBPD_UVDM_NAN_ACK,
 };
@@ -118,13 +112,13 @@ struct usbpd_vdm_data {
 	int ta_temp;
 	int ta_voltage;
 	bool reauth;
+	bool current_auth;
 	unsigned long s_secert[USBPD_UVDM_SS_LEN];
 	unsigned long digest[USBPD_UVDM_SS_LEN];
 };
 
 #define PD_ROLE_SINK_FOR_ADAPTER   0
 #define PD_ROLE_SOURCE_FOR_ADAPTER 1
-
 struct adapter_device {
 	struct adapter_properties props;
 	const struct adapter_ops *ops;
@@ -142,6 +136,7 @@ struct adapter_device {
 	uint8_t role;
 	uint8_t current_state;
 	uint32_t received_pdos[7];
+
 };
 
 struct adapter_ops {
@@ -162,6 +157,7 @@ struct adapter_ops {
 	int (*get_power_role)(struct adapter_device *dev);
 	int (*get_current_state)(struct adapter_device *dev);
 	int (*get_pdos)(struct adapter_device *dev);
+
 };
 
 static inline void *adapter_dev_get_drvdata(
@@ -204,6 +200,7 @@ extern int adapter_dev_set_cap_xm(struct adapter_device *adapter_dev, enum adapt
 extern int adapter_dev_get_svid(struct adapter_device *adapter_dev);
 extern int adapter_dev_get_id(struct adapter_device *adapter_dev);
 extern int adapter_dev_request_vdm_cmd(struct adapter_device *adapter_dev, enum uvdm_state cmd, unsigned char *data, unsigned int data_len);
+
 
 #endif /*LINUX_POWER_ADAPTER_CLASS_H*/
 

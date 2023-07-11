@@ -1,16 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (C) 2016 MediaTek Inc.
- * Copyright (C) 2021 XiaoMi, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See http://www.gnu.org/licenses/gpl-2.0.html for more details.
- */
+ * Copyright (c) 2021 MediaTek Inc.
+*/
 
 /*****************************************************************************
  *
@@ -92,26 +83,20 @@ struct mtk_battery gm;
 /* ============================================================ */
 /* gauge hal interface */
 /* ============================================================ */
+
+void __attribute__ ((weak)) 
+		pmic_register_interrupt_callback(unsigned int intNo,
+  		void (EINT_FUNC_PTR) (void))
+{
+	/*work around for mt6768*/
+}
+
 bool gauge_get_current(int *bat_current)
 {
 	bool is_charging = false;
-	union power_supply_propval ibat_val = {0};
-	int ret = 0;
 
 	if (is_fg_disabled()) {
-		if (battery_main.USE_TI_GAUGE && battery_main.ti_bms_psy) {
-			ret = power_supply_get_property(battery_main.ti_bms_psy,
-					POWER_SUPPLY_PROP_CURRENT_NOW, &ibat_val);
-			if (!ret) {
-				*bat_current = ibat_val.intval;
-				is_charging = (ibat_val.intval < 0)?true:false;
-			} else {
-				bm_err("%s get ti_bms ibat failed, ret:%d \n", __func__, ret);
-				*bat_current = 0;
-			}
-		} else {
-			*bat_current = 0;
-		}
+		*bat_current = 0;
 		return is_charging;
 	}
 
@@ -1089,7 +1074,7 @@ static int fg_read_dts_val(const struct device_node *np,
 		bm_debug("Get %s: %d\n",
 			 node_srting, *param);
 	} else {
-		bm_err("Get %s failed\n", node_srting);
+		bm_debug("Get %s failed\n", node_srting);
 		return -1;
 	}
 	return 0;
@@ -1106,7 +1091,7 @@ static int fg_read_dts_val_by_idx(const struct device_node *np,
 		bm_debug("Get %s %d: %d\n",
 			 node_srting, idx, *param);
 	} else {
-		bm_err("Get %s failed, idx %d\n", node_srting, idx);
+		bm_debug("Get %s failed, idx %d\n", node_srting, idx);
 		return -1;
 	}
 	return 0;
@@ -2443,12 +2428,12 @@ void fg_bat_temp_int_init(void)
 
 	if (fg_interrupt_check() == false)
 		return;
-
+#if defined(CONFIG_MTK_DISABLE_GAUGE) || defined(FIXED_TBAT_25)
 	tmp = 1;
 	fg_bat_new_ht = 1;
 	fg_bat_new_lt = 1;
 	return;
-
+#else
 	tmp = force_get_tbat(true);
 
 	fg_bat_new_ht = TempToBattVolt(tmp + 1, 1);
@@ -2460,7 +2445,7 @@ void fg_bat_temp_int_init(void)
 		gm.gdev, true, fg_bat_new_lt);
 	gauge_dev_enable_battery_tmp_ht_interrupt(
 		gm.gdev, true, fg_bat_new_ht);
-
+#endif
 }
 
 void fg_bat_temp_int_internal(void)
@@ -2474,14 +2459,14 @@ void fg_bat_temp_int_internal(void)
 		return;
 	}
 
-
+#if defined(CONFIG_MTK_DISABLE_GAUGE) || defined(FIXED_TBAT_25)
 	battery_main.BAT_batt_temp = 25;
 	battery_update(&battery_main);
 	tmp = 1;
 	fg_bat_new_ht = 1;
 	fg_bat_new_lt = 1;
 	return;
-
+#else
 	tmp = force_get_tbat(true);
 
 	gauge_dev_enable_battery_tmp_lt_interrupt(gm.gdev, false, 0);
@@ -2518,6 +2503,7 @@ void fg_bat_temp_int_internal(void)
 
 	battery_main.BAT_batt_temp = tmp;
 	battery_update(&battery_main);
+#endif
 }
 
 void fg_bat_temp_int_l_handler(void)
@@ -2853,9 +2839,10 @@ void fg_drv_update_hw_status(void)
 
 int battery_update_routine(void *x)
 {
+	int ret = 0;
 	battery_update_psd(&battery_main);
 	while (1) {
-		wait_event(gm.wait_que,
+		ret = wait_event_interruptible(gm.wait_que,
 			(gm.fg_update_flag > 0)
 			|| (gm.tracking_cb_flag > 0)
 			|| (gm.onepercent_cb_flag > 0));
@@ -4739,7 +4726,8 @@ void mtk_battery_init(struct platform_device *dev)
 		fg_zcv_int_handler);
 
 		if (gauge_get_hw_version() < GAUGE_HW_V2000) {
-			lbat_user_register(&gm.lowbat_service, "fuel gauge",
+// workaround for mt6768
+			/*lbat_user_register(&gm.lowbat_service, "fuel gauge",
 			fg_cust_data.vbat2_det_voltage3 / 10,
 			fg_cust_data.vbat2_det_voltage1 / 10,
 			fg_cust_data.vbat2_det_voltage2 / 10,
@@ -4749,7 +4737,7 @@ void mtk_battery_init(struct platform_device *dev)
 			fg_cust_data.vbat2_det_time * 1000,
 			fg_cust_data.vbat2_det_counter,
 			fg_cust_data.vbat2_det_time * 1000,
-			fg_cust_data.vbat2_det_counter);
+			fg_cust_data.vbat2_det_counter);*/
 
 			/* sw bat_cycle_car init, gm25 should start from 0 */
 			gm.bat_cycle_car = gauge_get_coulomb();

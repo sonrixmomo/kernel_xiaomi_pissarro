@@ -1,16 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (C) 2016 MediaTek Inc.
- * Copyright (C) 2021 XiaoMi, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See http://www.gnu.org/licenses/gpl-2.0.html for more details.
- */
+ * Copyright (c) 2021 MediaTek Inc.
+*/
 
 #include <linux/init.h>		/* For init/exit macros */
 #include <linux/module.h>	/* For MODULE_ marcros  */
@@ -52,6 +43,7 @@
 #include <linux/irqdesc.h>
 #include <linux/vmalloc.h>
 #include <linux/preempt.h>
+#include <linux/hwid.h>
 
 #include <linux/power_supply.h>
 #include "mtk_charger_intf.h"
@@ -64,6 +56,24 @@ enum pd_type_def {
 	PD_SRC_PDO_TYPE_PPS,
 	PD_SRC_PDO_TYPE_UNKNOW,
 };
+
+enum {
+	SSDEV_APDO_MAX_210W = 210,
+	SSDEV_APDO_MAX_120W = 120,
+	SSDEV_APDO_MAX_100W = 100,
+	SSDEV_APDO_MAX_67W = 67,
+	SSDEV_APDO_MAX_65W = 65,
+	SSDEV_APDO_MAX_55W = 55,
+	SSDEV_APDO_MAX_50W = 50,
+	SSDEV_APDO_MAX_33W = 33
+};
+
+enum product_name {
+	PISSARRO,
+	PISSARROPRO,
+};
+
+static int product_name = UNKNOW;
 
 struct mtk_pd_adapter_info {
 	struct tcpc_device *tcpc;
@@ -422,6 +432,7 @@ static int pd_request_vdm_cmd(struct adapter_device *dev,
 		break;
 	case USBPD_UVDM_VERIFIED:
 	case USBPD_UVDM_REMOVE_COMPENSATION:
+	case USBPD_UVDM_10A_AUTHEN:
 		vdm_data->cnt = 1 + USBPD_UVDM_VERIFIED_LEN;
 
 		for (i = 0; i < USBPD_UVDM_VERIFIED_LEN; i++)
@@ -513,6 +524,7 @@ static int pd_get_pdos(struct adapter_device *dev)
 	return MTK_ADAPTER_OK;
 }
 
+
 int pd_get_output(struct adapter_device *dev, int *mV, int *mA)
 {
 	int ret = MTK_ADAPTER_OK;
@@ -567,6 +579,37 @@ int pd_get_status(struct adapter_device *dev,
 
 	return ret;
 
+}
+
+static int ssdev_typec_filter_apdo_power_for_report(int apdo_max)
+{
+	if (product_name == PISSARROPRO) {    // 2S or 120W 1S add project type here
+		if (apdo_max >= 110)
+			return SSDEV_APDO_MAX_120W;
+		else if (apdo_max >= 96 && apdo_max < 110)
+			return SSDEV_APDO_MAX_100W;
+		else if (apdo_max >= 67 && apdo_max < 96)
+			return SSDEV_APDO_MAX_67W;
+		else if (apdo_max >= 65 && apdo_max < 67)
+			return SSDEV_APDO_MAX_65W;
+		else if (apdo_max > 50 && apdo_max < 65)
+			return SSDEV_APDO_MAX_55W;
+		else if (apdo_max == 50)
+			return SSDEV_APDO_MAX_50W;
+		else    //other such as 40W, we do not show the animaton below 50w
+			return SSDEV_APDO_MAX_33W;
+	} else {    //1S and maxium power is 67w projects,3A cable apdo max only 33W for non-1/4 charger ic
+		if (apdo_max >= 67)
+			return SSDEV_APDO_MAX_67W;
+		else if (apdo_max >= 65 && apdo_max < 67)
+			return SSDEV_APDO_MAX_65W;
+		else if (apdo_max > 50 && apdo_max < 65)
+			return SSDEV_APDO_MAX_55W;
+		else if (apdo_max == 50)
+			return SSDEV_APDO_MAX_50W;
+		else    //other such as 40W, we do not show the animaton below 50w
+			return SSDEV_APDO_MAX_33W;
+	}
 }
 
 static int pd_get_cap(struct adapter_device *dev,
@@ -659,7 +702,8 @@ APDO_REGAIN:
 				chr_err("[%s]VBUS = [%d,%d], IBUS = %d, WATT = %d, TYPE = %d\n",
 					__func__, tacap->min_mv[i], tacap->max_mv[i], tacap->ma[i], tacap->maxwatt[i], tacap->type[i]);
 			}
-			val.intval = apdo_max / 1000000;
+			apdo_max = apdo_max / 1000000;
+			val.intval = ssdev_typec_filter_apdo_power_for_report(apdo_max);
 			power_supply_set_property(info->usb_psy, POWER_SUPPLY_PROP_APDO_MAX, &val);
 		}
 	} else if (type == MTK_PD_APDO_REGAIN) {
@@ -668,6 +712,8 @@ APDO_REGAIN:
 			power_supply_get_property(info->usb_psy, POWER_SUPPLY_PROP_PD_TYPE, &val);
 			if (ret == TCPM_SUCCESS && val.intval == MTK_PD_CONNECT_PE_READY_SNK_APDO) {
 				chr_info("[%s] ready to get pps info\n", __func__);
+				val.intval = 1;
+				power_supply_set_property(info->usb_psy, POWER_SUPPLY_PROP_PD_AUTHENTICATION, &val);
 				goto APDO_REGAIN;
 			} else {
 				chr_info("[%s] retry for PPS ready\n", __func__);
@@ -675,6 +721,10 @@ APDO_REGAIN:
 				timeout++;
 			}
 		}
+	} else if (type == MTK_CAP_TYPE_UNKNOWN) {
+		chr_err("[%s] xiaomi pd adapter auth failed\n", __func__);
+		val.intval = 0;
+		power_supply_set_property(info->usb_psy, POWER_SUPPLY_PROP_PD_AUTHENTICATION, &val);
 	}
 
 	return MTK_ADAPTER_OK;
@@ -731,6 +781,8 @@ static int mtk_pd_adapter_probe(struct platform_device *pdev)
 	static bool is_deferred;
 
 	chr_err("%s\n", __func__);
+
+	adapter_parse_cmdline();
 
 	info = devm_kzalloc(&pdev->dev, sizeof(struct mtk_pd_adapter_info),
 			GFP_KERNEL);
